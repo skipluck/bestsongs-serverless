@@ -30,12 +30,9 @@ provider:
       Resource: arn:aws:s3:::${self:provider.environment.bucketName}/*
     - Effect: Allow
       Action:
-        - dynamodb:Query
         - dynamodb:Scan
         - dynamodb:GetItem
         - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.tableName}"
 
 functions:
@@ -79,12 +76,6 @@ resources:
         AttributeDefinitions: 
           - AttributeName: "rank"
             AttributeType: "N"
-#          - 
-#            AttributeName: "Song"
-#            AttributeType: "S"
-#          - 
-#            AttributeName: "Artist"
-#            AttributeType: "S"
         KeySchema: 
           - AttributeName: "rank"
             KeyType: "HASH"
