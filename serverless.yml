@@ -1,0 +1,94 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: bestsongs
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  environment:
+    bucketName: ${self:service}-${self:provider.stage}-bucket
+    tableName: ${self:service}-${self:provider.stage}-table
+
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+      Resource: arn:aws:s3:::${self:provider.environment.bucketName}/*
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.tableName}"
+
+functions:
+  randomsong:
+    handler: handler.randomsong
+    events:
+      - http:
+          path: bestsongs
+          method: get
+
+  allsongs:
+    handler: handler.allsongs
+    events:
+      - http:
+          path: bestsongs/all
+          method: get
+
+  rankedsong:
+    handler: handler.rankedsong
+    events:
+      - http:
+          path: bestsongs/{rank}
+          method: get
+
+  loaddata:
+    handler: handler.loaddata
+    events:
+      - s3:
+          bucket: ${self:provider.environment.bucketName}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: uploads/
+            - suffix: .csv
+
+
+resources:
+  Resources:
+    DynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions: 
+          - AttributeName: "rank"
+            AttributeType: "N"
+#          - 
+#            AttributeName: "Song"
+#            AttributeType: "S"
+#          - 
+#            AttributeName: "Artist"
+#            AttributeType: "S"
+        KeySchema: 
+          - AttributeName: "rank"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.tableName}          
